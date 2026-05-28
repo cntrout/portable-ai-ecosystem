@@ -123,8 +123,6 @@ portable-ai-ecosystem/
 ├── AGENTS.md                       (generic root rules, no client refs)
 ├── CLAUDE.md                       (byte-identical sibling per atomic-update rule)
 ├── .gitignore                      (excludes local state, secrets, hidden framework dirs)
-├── scripts/
-│   └── bootstrap.sh                (POSIX bash, idempotent, --dry-run flag, audit-fixed)
 ├── .claude/
 │   ├── hooks/
 │   │   └── session-start.sh        (generic, soft-partition aware)
@@ -142,7 +140,10 @@ portable-ai-ecosystem/
 │   ├── PRODUCE-outputs/            (all subfolders + READMEs, no actual outputs)
 │   ├── RECORD-decisions/
 │   │   └── _index.md               (empty ledger, format-spec only)
-│   └── RUN-automations/            (skill registry + scaffolds, no client skills)
+│   └── RUN-automations/
+│       ├── scripts/
+│       │   └── bootstrap.sh        (POSIX bash, idempotent, --dry-run flag, audit-fixed)
+│       └── skills/                 (skill registry + scaffolds, no client skills)
 └── Initiatives/
     ├── README.md                   (explains the soft-partition model)
     └── _template/                  (ready-to-copy initiative skeleton)
@@ -183,7 +184,7 @@ What is *not* being asked for: admin privileges, Homebrew install, Docker, Node.
 2. **Verify Claude Code is installed and authenticated.** `which claude` returns a path; `claude --version` returns a version. First `claude` invocation completes auth against the client-issued API key.
 3. **Verify git is installed.** `git --version`.
 4. **Clone the repo over anonymous HTTPS.** `cd ~ && git clone https://github.com/{your-handle}/portable-ai-ecosystem.git {client-slug}-Claude && cd {client-slug}-Claude`. No credentials, no key setup, no `~/.ssh/config` work.
-5. **Run the bootstrap script.** `./scripts/bootstrap.sh`. Creates local-state directories, copies `settings.json.template` to `settings.local.json`, sets `.claude/hooks/session-start.sh` executable, writes the `Initiatives/.gitignore` one-way-flow layer, sets `pull.ff = only` in local git config, and prints next steps. The script is audit-fixed (no `eval "$@"` wrapper bug, no `set -euo pipefail` interactions with ripgrep no-match exits, no SSH config writes since the public-repo decision removed that need).
+5. **Run the bootstrap script.** `./Universal/RUN-automations/scripts/bootstrap.sh`. Creates local-state directories, copies `settings.json.template` to `settings.local.json`, sets `.claude/hooks/session-start.sh` executable, writes the `Initiatives/.gitignore` one-way-flow layer, sets `pull.ff = only` in local git config, and prints next steps. The script is audit-fixed (no `eval "$@"` wrapper bug, no `set -euo pipefail` interactions with ripgrep no-match exits, no SSH config writes since the public-repo decision removed that need).
 6. **Confirm Claude Code settings.** `settings.local.json` allowlist includes Read, Write, Edit, Grep, Glob, Bash, WebFetch, WebSearch. The `Write` tool is explicitly enabled in the template.
 7. **Run the validation prompt sequence** (next section).
 8. **Run `engagement-bootstrap-from-urls.md`** against the client's public URLs to populate brand, voice Layer 3, glossary, thesis. See companion playbook.
@@ -215,7 +216,7 @@ All six green = ecosystem is live. Any red = consult `INSTALL.md` §Troubleshoot
 | Finding category | Count | Disposition |
 |---|---|---|
 | Bootstrap script bash bugs (P0) | 12 | **Fixed** in the script that ships in the repo |
-| Path inconsistencies between docs (P0) | 4 | **Fixed.** Canonical paths locked: `~/{client-slug}-Claude/` for the working folder, `scripts/bootstrap.sh` for the bootstrap script, `.claude/hooks/session-start.sh` for the hook |
+| Path inconsistencies between docs (P0) | 4 | **Fixed.** Canonical paths locked: `~/{client-slug}-Claude/` for the working folder, `Universal/RUN-automations/scripts/bootstrap.sh` for the bootstrap script, `.claude/hooks/session-start.sh` for the hook |
 | Claude Code skill discovery unverified (P0) | 1 | **RESOLVED 2026-05-27.** Empirical test confirms skills load from bare `.claude/skills/{name}/SKILL.md` with no plugin manifest. Validation now ships as both a `validate-install` skill (primary) and the markdown checklist (spec). See `empirical-tests/2026-05-27 - Skill Discovery Test Results.md` |
 | `Write` tool missing from settings allowlist (P0) | 1 | **Fixed** in `settings.json.template` |
 | Hook rewrite not delivered (P0) | 1 | **Fixed.** Generic `session-start.sh` written and ships in the repo. Loads `Universal/AGENTS.md` (cascade gap fill), detects active initiative from pwd including lifecycle-prefixed paths, surfaces an engagement-level reminder when pwd is outside any initiative |
@@ -239,7 +240,7 @@ Decisions 1-5 resolved 2026-05-27. Two of three empirical questions resolved 202
 
 1. ~~**Skill discovery on bare directory.**~~ **RESOLVED 2026-05-27.** Empirical test on a personal Mac (Claude Code 2.1.144, Claude Sonnet 4.5) confirms strong positive across all 4 probes: skill auto-discovered, frontmatter parsed, invocation succeeded with exact-match output, file still readable via Read tool. Validation promoted from markdown-checklist-only to skill + markdown spec.
 2. ~~**`launchd` headless `claude -p`.**~~ **RESOLVED 2026-05-27.** Empirical test on a personal Mac confirms strong positive: a launchd user agent invoked `claude -p` non-interactively, the run completed without TTY errors or auth blockers, and the expected output was produced. Scheduled-task v2 can rely on launchd directly. Client-side IT approval of the launchd workflow still gates production rollout.
-3. **MDM and Gatekeeper on the client device.** Are `chmod +x` and execution of cloned shell scripts blocked by enterprise endpoint security? If yes, the bootstrap script needs an alternative invocation pattern (e.g., `bash scripts/bootstrap.sh` instead of `./scripts/bootstrap.sh`). Only testable on the actual client device; the install runbook treats it as a day-1 test with a known fallback.
+3. **MDM and Gatekeeper on the client device.** Are `chmod +x` and execution of cloned shell scripts blocked by enterprise endpoint security? If yes, the bootstrap script needs an alternative invocation pattern (e.g., `bash Universal/RUN-automations/scripts/bootstrap.sh` instead of `./Universal/RUN-automations/scripts/bootstrap.sh`). Only testable on the actual client device; the install runbook treats it as a day-1 test with a known fallback.
 
 ## Trustly-specific notes for the first run
 

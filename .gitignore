@@ -1,5 +1,6 @@
-# Local install state (created by bootstrap.sh)
+# Local install state (created by bootstrap.sh and initial-setup skill)
 .claude/_bootstrap-state/
+.claude/_setup-state/
 .claude/settings.local.json
 .bootstrap.log
 

@@ -4,9 +4,9 @@
 # Runs after `git clone` on the client device. Idempotent: safe to re-run.
 #
 # Usage:
-#   ./scripts/bootstrap.sh           run bootstrap
-#   ./scripts/bootstrap.sh --dry-run print what would change without doing it
-#   ./scripts/bootstrap.sh --help    show this message
+#   ./Universal/RUN-automations/scripts/bootstrap.sh           run bootstrap
+#   ./Universal/RUN-automations/scripts/bootstrap.sh --dry-run print what would change without doing it
+#   ./Universal/RUN-automations/scripts/bootstrap.sh --help    show this message
 #
 # Exit codes:
 #   0  success
@@ -28,7 +28,16 @@ set -e  # Exit on any command failure (no pipefail; we handle pipes case-by-case
 
 DRY_RUN=0
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+
+# Resolve REPO_ROOT depth-independently via git so this script works regardless
+# of where it lives inside the repo (currently `Universal/RUN-automations/scripts/`).
+# Fall back to script-relative resolution if git isn't available or this isn't a
+# git repo yet (e.g., during initial staging before `git init`).
+if command -v git > /dev/null 2>&1 && git -C "$SCRIPT_DIR" rev-parse --show-toplevel > /dev/null 2>&1; then
+  REPO_ROOT="$(git -C "$SCRIPT_DIR" rev-parse --show-toplevel)"
+else
+  REPO_ROOT="$(cd "$SCRIPT_DIR/../../.." && pwd)"
+fi
 LOG_FILE="$REPO_ROOT/.bootstrap.log"
 
 # ---- Helpers --------------------------------------------------------------

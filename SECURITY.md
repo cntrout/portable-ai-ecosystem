@@ -6,7 +6,7 @@ This is a personal AI workflow framework released as MIT-licensed open source. I
 
 Security concerns worth reporting fall into a few categories:
 
-1. **Vulnerabilities in shipped scripts** (`scripts/bootstrap.sh`, `.claude/hooks/session-start.sh`) that could cause unintended file modifications, privilege escalation, or arbitrary code execution
+1. **Vulnerabilities in shipped scripts** (`Universal/RUN-automations/scripts/bootstrap.sh`, `.claude/hooks/session-start.sh`) that could cause unintended file modifications, privilege escalation, or arbitrary code execution
 2. **Vulnerabilities in shipped skills** that could cause Claude to leak data outside the user's intended boundaries or modify files outside the working folder
 3. **Supply-chain issues** with the repo itself: tampering, account compromise, malicious commits to `main`
 4. **Documentation issues** that would lead a user to take an action with security implications (e.g., misleading IT-approval ask, unsafe default permissions in `settings.json.template`)

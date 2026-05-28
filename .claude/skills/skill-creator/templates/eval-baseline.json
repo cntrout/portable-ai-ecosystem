@@ -1,0 +1,20 @@
+{
+  "$schema": "skill-creator eval-baseline v1",
+  "skill_name": "<kebab-case-name>",
+  "created": "<ISO-8601 with offset, e.g. 2026-05-27T19:00:00-04:00>",
+  "last_evaluated": "<ISO-8601 with offset>",
+  "version_at_eval": "<semver of skill at eval time>",
+  "trigger_precision": 0.0,
+  "trigger_recall": 0.0,
+  "note": "Mirrors the standard grading.json shape (field names text/passed/evidence are load-bearing, the standard HTML viewer depends on them). Wrapping fields (created, last_evaluated, version_at_eval, trigger_precision, trigger_recall) sit at the top level; the inner grading object preserves the upstream grading shape verbatim.",
+  "grading": {
+    "skill_name": "<kebab-case-name>",
+    "expectations": [
+      {
+        "text": "<assertion description, e.g. 'Output is a valid markdown file'>",
+        "passed": false,
+        "evidence": "<one-line explanation referencing the output>"
+      }
+    ]
+  }
+}

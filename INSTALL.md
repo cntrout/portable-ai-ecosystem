@@ -139,21 +139,21 @@ Resolving deltas: 100%
 
 ```bash
 ls -la
-# Should include: AGENTS.md, CLAUDE.md, .claude/, Universal/, scripts/, Initiatives/
+# Should include: AGENTS.md, CLAUDE.md, .claude/, Universal/, Initiatives/
 ```
 
 **If the clone hangs or times out:** outbound HTTPS to github.com is blocked. Escalate to IT.
 
 ### Step 4. Run the bootstrap script
 
-The script lives at `scripts/bootstrap.sh` and handles the device-specific configuration that can't be checked into source control: creating local-state directories, copying `settings.json.template` to `settings.local.json`, making the session-start hook executable, writing the one-way-flow `.gitignore` for `Initiatives/`, setting `pull.ff = only` on the local git config, and writing a completion marker.
+The script lives at `Universal/RUN-automations/scripts/bootstrap.sh` and handles the device-specific configuration that can't be checked into source control: creating local-state directories, copying `settings.json.template` to `settings.local.json`, making the session-start hook executable, writing the one-way-flow `.gitignore` for `Initiatives/`, setting `pull.ff = only` on the local git config, and writing a completion marker.
 
 The script is idempotent, so re-running it is always safe.
 
 **If you want to see what the script will do before running it:**
 
 ```bash
-./scripts/bootstrap.sh --dry-run
+./Universal/RUN-automations/scripts/bootstrap.sh --dry-run
 ```
 
 This prints every change without making any.
@@ -161,7 +161,7 @@ This prints every change without making any.
 **Run the bootstrap:**
 
 ```bash
-./scripts/bootstrap.sh
+./Universal/RUN-automations/scripts/bootstrap.sh
 ```
 
 **Expected output:** A series of `[bootstrap]` log lines ending with:
@@ -182,12 +182,12 @@ Next steps:
 
 **If the script fails with `error: $REPO_ROOT/AGENTS.md not found`:** you're not running from a properly-cloned repo. Re-check Step 3 succeeded and that `pwd` is at the repo root.
 
-**If the script fails with `Permission denied`:** the script isn't executable. Run `chmod +x scripts/bootstrap.sh` first.
+**If the script fails with `Permission denied`:** the script isn't executable. Run `chmod +x Universal/RUN-automations/scripts/bootstrap.sh` first.
 
 ### Step 5. Verify the bootstrap completion marker
 
 ```bash
-cat _bootstrap-state/bootstrap-completed.txt
+cat .claude/_bootstrap-state/bootstrap-completed.txt
 ```
 
 **Expected output:** A line like:
@@ -237,6 +237,23 @@ In the same `claude` session:
 ```
 
 **Expected:** The skill walks through six probes, prints a green health card, and writes a dated install-record to `Universal/RECORD-decisions/`. If anything is red or amber, the skill prints a remediation pointer for that specific probe.
+
+### Step 9. Run the initial-setup skill
+
+After validation passes, configure per-device choices the framework's other skills need. In the same `claude` session:
+
+```
+> /initial-setup
+```
+
+**Expected:** The skill walks through:
+1. Framework root confirmation (auto-detected via git)
+2. Friction-ledger path (default `Universal/PRODUCE-outputs/friction-ledger.md`)
+3. Self-improvement-review cadence (default weekly Friday)
+4. Voice customization plan (use shipped author voice / customize now / customize later)
+5. Workspace-health-check posture (v1.2 placeholder)
+
+Writes the config to `.claude/_setup-state/config.json` and appends a row to `Universal/RECORD-decisions/_index.md`. Idempotent; safe to re-invoke any time to revisit settings.
 
 The next section is the spec for what the skill checks, in case you prefer to run the probes manually.
 
@@ -290,10 +307,10 @@ git pull
 
 `Initiatives/.gitignore` was written by bootstrap; it preserves your in-progress work. The `pull.ff = only` config from bootstrap means pulls either fast-forward cleanly or fail loudly (no surprise merge commits).
 
-If `.claude/` or `scripts/` changed in the pulled update, re-run bootstrap to pick up any new local-state setup:
+If `.claude/` or `Universal/RUN-automations/scripts/` changed in the pulled update, re-run bootstrap to pick up any new local-state setup:
 
 ```bash
-./scripts/bootstrap.sh   # idempotent
+./Universal/RUN-automations/scripts/bootstrap.sh   # idempotent
 claude                    # restart your Claude Code session
 /validate-install         # re-verify
 ```
@@ -343,7 +360,7 @@ When an archived initiative is no longer worth keeping (typically after a year),
 |---------|-----|
 | `claude: command not found` | PATH doesn't include Claude Code's bin directory. Re-source your shell config (`source ~/.zshrc` or equivalent), restart Terminal, or reinstall Claude Code. |
 | `git clone` hangs and times out | Outbound HTTPS to github.com is blocked. Escalate to IT with the destination domain. |
-| `./scripts/bootstrap.sh: Permission denied` | Script isn't executable. Run `chmod +x scripts/bootstrap.sh` and retry. |
+| `./Universal/RUN-automations/scripts/bootstrap.sh: Permission denied` | Script isn't executable. Run `chmod +x Universal/RUN-automations/scripts/bootstrap.sh` and retry. |
 | Bootstrap fails with `AGENTS.md not found` | Not running from the repo root. `cd` into the cloned folder first and re-run. |
 | Session-start hook isn't firing (Claude doesn't see `Universal/AGENTS.md`) | Check `.claude/settings.json` has a SessionStart entry. Test the hook manually: `bash .claude/hooks/session-start.sh \| head`. If output is empty, `Universal/AGENTS.md` is missing from your clone; re-pull. |
 | Voice rule recall fails (probe 1 of validation) | The voice-composition.md file isn't being read. Confirm `Universal/FOLLOW-workflows-and-guides/playbooks/voice-composition.md` exists in your clone. Re-pull if missing. |

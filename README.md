@@ -30,9 +30,9 @@ If you have a full developer setup with admin access, Cowork, Claude Desktop, an
 
 **Playbooks** (`Universal/FOLLOW-workflows-and-guides/playbooks/`). The specs. Each playbook is a markdown document that describes a recurring workflow: how to bootstrap a new engagement from a set of public URLs, how to kick off a new initiative, how to run the change-protocol sweep when you edit a system file, how folder creation works. Eight playbooks ship in v1: `portable-ai-ecosystem`, `engagement-bootstrap-from-urls`, `process-meeting-transcripts`, `initiative-kickoff`, `external-tool-approval`, `voice-composition`, `folder-creation-rules`, and `change-protocol`.
 
-**Skills** (`.claude/skills/` and `Universal/RUN-automations/skills/`). The runtime. A skill is a `SKILL.md` file with frontmatter that Claude Code auto-discovers and invokes. Six skills ship in v1: `validate-install`, `engagement-bootstrap-from-urls`, `sanitization-scan`, `initiative-kickoff`, `process-meeting-transcripts`, and `change-protocol-sweep`. `external-tool-approval` is a playbook, not a skill; it lives under `Universal/FOLLOW-workflows-and-guides/playbooks/`.
+**Skills** (`.claude/skills/`). The runtime. A skill is a `SKILL.md` file with frontmatter that Claude Code auto-discovers and invokes. Ten skills ship in v1.1: `validate-install`, `initial-setup`, `engagement-bootstrap-from-urls`, `sanitization-scan`, `initiative-kickoff`, `process-meeting-transcripts`, `change-protocol-sweep`, `skill-creator`, `friction-ledger-capture`, and `self-improvement-review`. `external-tool-approval` is a playbook, not a skill; it lives under `Universal/FOLLOW-workflows-and-guides/playbooks/`.
 
-**Scripts** (`scripts/` and `.claude/hooks/`). The plumbing. A POSIX bash bootstrap script (idempotent, with a `--dry-run` flag) sets up local state on first clone. A session-start hook detects which initiative you're working in based on `pwd` and loads the right context.
+**Scripts** (`Universal/RUN-automations/scripts/` and `.claude/hooks/`). The plumbing. A POSIX bash bootstrap script (idempotent, with a `--dry-run` flag) sets up local state on first clone. A session-start hook detects which initiative you're working in based on `pwd` and loads the right context.
 
 **Voice templates** (`Universal/FOLLOW-workflows-and-guides/voice/`). Three voice files plus an empty Layer-3 template. Layer 1 (`do-not.md`) is universal forbidden patterns. Layer 2 (`personal.md` + `formats.md`) is the writer's baseline voice and per-format rules (email, Slack, doc, ticket, presentation). Layer 3 (`voice.md`) ships as an empty template that the engagement bootstrapper fills with the client's brand voice.
 
@@ -56,7 +56,7 @@ The full runbook lives in `INSTALL.md`. The short version:
 
 1. **Verify prerequisites.** `git --version` returns a version. `claude --version` returns a version. Your Anthropic API key is configured (Claude Code's first-run auth handles this).
 2. **Clone the repo.** `git clone https://github.com/cntrout/portable-ai-ecosystem.git ~/ai-workspace && cd ~/ai-workspace`.
-3. **Run the bootstrap script.** `bash scripts/bootstrap.sh`. It creates local-state directories, copies `settings.json.template` to `settings.local.json`, marks the hook executable, writes the `Initiatives/.gitignore` one-way-flow layer, and sets `pull.ff = only` in local git config. The script is idempotent. Re-runs are safe.
+3. **Run the bootstrap script.** `bash Universal/RUN-automations/scripts/bootstrap.sh`. It creates local-state directories, copies `settings.json.template` to `settings.local.json`, marks the hook executable, writes the `Initiatives/.gitignore` one-way-flow layer, and sets `pull.ff = only` in local git config. The script is idempotent. Re-runs are safe.
 4. **Validate.** Open a `claude` session in the working folder and run the `validate-install` skill, or walk through the six-probe checklist in `INSTALL.md`. All six green means the ecosystem loaded correctly.
 5. **Optionally, bootstrap an engagement.** From inside the working folder, invoke the `engagement-bootstrap-from-urls` skill with your client's public URLs (homepage, brand page, about page). The skill populates voice Layer 3, the glossary, brand assets, and a starter thesis from publicly available content.
 
@@ -84,12 +84,10 @@ portable-ai-ecosystem/
 ├── AGENTS.md                       (root rules, agents.md standard)
 ├── CLAUDE.md                       (byte-identical sibling of AGENTS.md)
 ├── .gitignore
-├── scripts/
-│   └── bootstrap.sh                (idempotent, --dry-run flag)
 ├── .claude/
 │   ├── hooks/
 │   │   └── session-start.sh        (soft-partition aware)
-│   ├── skills/                     (scaffolds for v1 skills)
+│   ├── skills/                     (scaffolds for v1.1 skills)
 │   └── settings.json.template
 ├── Universal/
 │   ├── AGENTS.md
@@ -104,6 +102,8 @@ portable-ai-ecosystem/
 │   ├── RECORD-decisions/
 │   │   └── _index.md               (empty ledger, format-spec only)
 │   └── RUN-automations/
+│       ├── scripts/
+│       │   └── bootstrap.sh        (idempotent, --dry-run flag)
 │       └── skills/                 (skill registry + scaffolds)
 └── Initiatives/
     ├── README.md                   (explains the soft-partition model)
@@ -132,9 +132,9 @@ The framework targets consultants in fintech, healthcare, and other regulated in
 
 ## Status
 
-**v1** released 2026-05-27.
+**v1.0** released 2026-05-27. **v1.1** released 2026-05-28.
 
-Stable in v1:
+Stable in v1.1:
 
 - Verb-bucket folder framework
 - Voice Layers 1 and 2 (do-not.md, personal.md, formats.md)
@@ -142,15 +142,23 @@ Stable in v1:
 - Soft-partition initiative model
 - Change-protocol and folder-creation rules
 - Bootstrap script (POSIX bash, idempotent, audit-fixed)
-- Session-start hook (soft-partition aware)
-- Six v1 skills: `validate-install`, `engagement-bootstrap-from-urls`, `sanitization-scan`, `initiative-kickoff`, `process-meeting-transcripts`, `change-protocol-sweep`
+- Session-start hook (soft-partition aware, lifecycle-prefix safe)
+- Ten v1.1 skills: `validate-install`, `initial-setup`, `engagement-bootstrap-from-urls`, `sanitization-scan`, `initiative-kickoff`, `process-meeting-transcripts`, `change-protocol-sweep`, `skill-creator`, `friction-ledger-capture`, `self-improvement-review`
 - Validation via the `validate-install` skill plus a six-probe markdown checklist as fallback
+- Per-device configuration via the `initial-setup` skill
+- Self-improvement loop: `friction-ledger-capture` (Phase 1, daily-ish capture) plus `self-improvement-review` (Phase 2, cadence-based pattern review)
 
-Planned for v1.1:
+New in v1.1 (since v1.0):
 
+- `RUN-automations/` moved to its conceptual home under `Universal/`; `scripts/` consolidated under `Universal/RUN-automations/scripts/`
+- 4 new skills migrated from the framework author's prior ecosystem: `skill-creator`, `friction-ledger-capture`, `self-improvement-review`, `initial-setup`
+- Skill-drafts restructured from flat to nested directories so multi-file skill packages fit cleanly
+
+Planned for v1.2:
+
+- `workspace-health-check` skill migration (substantial: 19-pass audit framework, leaner pass set targeted for the portable framework)
 - Scheduled task surface via `launchd` user agents (technically validated 2026-05-27, pending client-IT approval workflows)
 - Meeting-transcript automation via approved MCP connectors (today's path is a source-agnostic manual playbook)
-- Additional skill scaffolds for common PM workflows (1-pager generation, stakeholder updates, sprint planning)
 - A handful of the Friday-evening polish items from the v1 audit deferral queue
 
 ## License and attribution
