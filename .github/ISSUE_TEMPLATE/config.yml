@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Security issue
+    url: https://github.com/cntrout/portable-ai-ecosystem/blob/main/SECURITY.md
+    about: For vulnerability reports, follow the process in SECURITY.md.
+  - name: Pull requests
+    url: https://github.com/cntrout/portable-ai-ecosystem/blob/main/CONTRIBUTING.md
+    about: External PRs are not accepted. See CONTRIBUTING.md for the fork-friendly alternative.

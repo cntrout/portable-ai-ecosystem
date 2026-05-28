@@ -1,0 +1,35 @@
+# Local install state (created by bootstrap.sh)
+.claude/_bootstrap-state/
+.claude/settings.local.json
+.bootstrap.log
+
+# In-progress initiative content stays local (also enforced by Initiatives/.gitignore written by bootstrap)
+# Note: Initiatives/.gitignore is written by bootstrap.sh on first install.
+
+# OS junk
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+
+# Editor state
+.vscode/
+.idea/
+*~
+
+# Hidden framework dirs (defensive; not used in v1 but block accidental ingestion)
+.smart-env/
+.health-check/
+
+# Quarantine
+_trash/
+
+# Machine-generated outputs that regenerate
+**/machine-generated/
+
+# Node deps
+node_modules/
+
+# Python cache
+__pycache__/
+*.pyc

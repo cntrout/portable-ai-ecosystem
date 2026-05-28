@@ -1,0 +1,44 @@
+# Universal Layer Rules
+
+Universal/AGENTS.md complements the root AGENTS.md with rules that govern the Universal/ layer specifically. CLAUDE.md is the byte-identical sibling at this path; the [agents.md](https://agents.md/) open standard makes AGENTS.md canonical, and the sibling exists so Claude clients that read CLAUDE.md by default still see the same content.
+
+## Purpose of the Universal/ layer
+
+Universal/ holds cross-engagement context: frameworks, playbooks, voice templates, exemplars, and the foundational decisions ledger. Anything that's reusable from one engagement to the next lives here, regardless of the working directory.
+
+The session-start hook explicitly loads this file because Claude Code's native AGENTS.md cascade doesn't reach into Universal/. Universal/ is a sibling of `Initiatives/`, not a parent, so the hook fills the cascade gap by sourcing Universal/AGENTS.md alongside the root AGENTS.md whenever a session starts.
+
+## What lives in each verb bucket
+
+**`READ-references-and-knowledge/`** holds content Claude consumes as context: frameworks, concept docs, glossary entries, the people roster, the engagement thesis, evaluation ledgers (MASTER-tools, MASTER-concepts), and brand assets. If Claude reads it but doesn't write it, this is where it lives.
+
+**`FOLLOW-workflows-and-guides/`** holds rules that govern how work happens: playbooks (SOPs and decision flows), the three voice layers (do-not, personal, formats), and templates. Files here tell Claude what to do, not what to know.
+
+**`PRODUCE-outputs/`** holds content Claude creates: research investigations, handoffs, exemplars (the swipe file by skill), machine-generated reports, static assets, and live HTML artifacts. Anything Claude writes during a session lands here when it's worth keeping across sessions.
+
+**`RECORD-decisions/`** holds the foundational append-only decisions ledger at `_index.md`. The format spec lives in `change-protocol.md`. Decisions made at the engagement or initiative level may stay scoped to those layers; the universal ledger is for decisions that affect how Claude operates across all engagements.
+
+**`RUN-automations/`** holds skill scaffolds and the skill registry. Most active skills live at the repo-root `.claude/skills/` directory per Claude Code's native discovery convention; Universal/RUN-automations holds scaffolds, drafts, and registry indexes rather than executable skill files.
+
+## When to use each bucket
+
+Concept docs and reference material go in `READ-`. Rules and playbooks go in `FOLLOW-`. Generated content goes in `PRODUCE-`. Foundational decisions go in `RECORD-`. Skill drafts and automation registry go in `RUN-`. If a file fits two buckets, pick the verb that describes how Claude interacts with it during a session.
+
+## Promotion from initiative-specific to universal
+
+When an artifact created inside `Initiatives/{slug}/` turns out to be reusable across initiatives, the template (not the filled-in instance) graduates up. A one-pager template that worked well moves to `Universal/FOLLOW-workflows-and-guides/templates/`; a polished exemplar moves to `Universal/PRODUCE-outputs/exemplars/`. The filled-in artifact stays inside the originating initiative.
+
+Promotion runs through the standard change-protocol sweep: edit the file, update the relevant index, append a row to the universal decisions ledger noting the promotion, and check whether any cross-references need updating.
+
+## Cross-references
+
+- Migration architecture and packaging: `FOLLOW-workflows-and-guides/playbooks/portable-ai-ecosystem.md`
+- Three-layer voice composition rule: `FOLLOW-workflows-and-guides/playbooks/voice-composition.md`
+- Edit-time sync and doc-sweep rules: `FOLLOW-workflows-and-guides/playbooks/change-protocol.md`
+- Where folders can and can't be created: `FOLLOW-workflows-and-guides/playbooks/folder-creation-rules.md`
+- Spinning up a new initiative folder: `FOLLOW-workflows-and-guides/playbooks/initiative-kickoff.md`
+- Bootstrapping a new engagement from public URLs: `FOLLOW-workflows-and-guides/playbooks/engagement-bootstrap-from-urls.md`
+
+---
+
+*History: [RECORD-decisions/_index.md](RECORD-decisions/_index.md)*

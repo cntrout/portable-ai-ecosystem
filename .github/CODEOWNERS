@@ -1,0 +1,8 @@
+# CODEOWNERS
+#
+# Every file in this repo is owned by the maintainer. Combined with branch
+# protection rules on `main` (require code owner review), this enforces the
+# no-external-PR policy at the GitHub level. See CONTRIBUTING.md for the
+# policy rationale.
+
+* @cntrout
