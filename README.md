@@ -28,9 +28,9 @@ If you have a full developer setup with admin access, Cowork, Claude Desktop, an
 
 ## What's in the box
 
-**Playbooks** (`Universal/FOLLOW-workflows-and-guides/playbooks/`). The specs. Each playbook is a markdown document that describes a recurring workflow: how to bootstrap a new engagement from a set of public URLs, how to kick off a new initiative, how to run the change-protocol sweep when you edit a system file, how folder creation works. Eight playbooks ship in v1: `portable-ai-ecosystem`, `engagement-bootstrap-from-urls`, `process-meeting-transcripts`, `initiative-kickoff`, `external-tool-approval`, `voice-composition`, `folder-creation-rules`, and `change-protocol`.
+**Playbooks** (`Universal/FOLLOW-workflows-and-guides/playbooks/`). The specs. Each playbook is a markdown document that describes a recurring workflow: how to bootstrap a new engagement from a set of public URLs, how to kick off a new initiative, how to run the change-protocol sweep when you edit a system file, how folder creation works. Twelve playbooks ship in v1.2: `portable-ai-ecosystem`, `engagement-bootstrap-from-urls`, `process-meeting-transcripts`, `initiative-kickoff`, `external-tool-approval`, `voice-composition`, `folder-creation-rules`, `change-protocol`, `initial-install`, `operator-voice-bootstrap`, `voice-personal-scrub-check`, and `change-protocol-sweep-triggers`.
 
-**Skills** (`.claude/skills/`). The runtime. A skill is a `SKILL.md` file with frontmatter that Claude Code auto-discovers and invokes. Ten skills ship in v1.1: `validate-install`, `initial-setup`, `engagement-bootstrap-from-urls`, `sanitization-scan`, `initiative-kickoff`, `process-meeting-transcripts`, `change-protocol-sweep`, `skill-creator`, `friction-ledger-capture`, and `self-improvement-review`. `external-tool-approval` is a playbook, not a skill; it lives under `Universal/FOLLOW-workflows-and-guides/playbooks/`.
+**Skills** (`.claude/skills/`). The runtime. A skill is a `SKILL.md` file with frontmatter that Claude Code auto-discovers and invokes. Thirteen skills ship in v1.2: `initial-install` (the orchestrator), `validate-install`, `initial-setup`, `engagement-bootstrap-from-urls`, `operator-voice-bootstrap`, `wire-hooks-and-tasks`, `sanitization-scan`, `initiative-kickoff`, `process-meeting-transcripts`, `change-protocol-sweep`, `skill-creator`, `friction-ledger-capture`, and `self-improvement-review`. `external-tool-approval` is a playbook, not a skill; it lives under `Universal/FOLLOW-workflows-and-guides/playbooks/`.
 
 **Scripts** (`Universal/RUN-automations/scripts/` and `.claude/hooks/`). The plumbing. A POSIX bash bootstrap script (idempotent, with a `--dry-run` flag) sets up local state on first clone. A session-start hook detects which initiative you're working in based on `pwd` and loads the right context.
 
@@ -58,7 +58,7 @@ The full runbook lives in `INSTALL.md`. The short version:
 2. **Clone the repo.** `git clone https://github.com/cntrout/portable-ai-ecosystem.git ~/ai-workspace && cd ~/ai-workspace`.
 3. **Run the bootstrap script.** `bash Universal/RUN-automations/scripts/bootstrap.sh`. It creates local-state directories, copies `settings.json.template` to `settings.local.json`, marks the hook executable, writes the `Initiatives/.gitignore` one-way-flow layer, and sets `pull.ff = only` in local git config. The script is idempotent. Re-runs are safe.
 4. **Validate.** Open a `claude` session in the working folder and run the `validate-install` skill, or walk through the six-probe checklist in `INSTALL.md`. All six green means the ecosystem loaded correctly.
-5. **Optionally, bootstrap an engagement.** From inside the working folder, invoke the `engagement-bootstrap-from-urls` skill with your client's public URLs (homepage, brand page, about page). The skill populates voice Layer 3, the glossary, brand assets, and a starter thesis from publicly available content.
+5. **Run the orchestrator.** Invoke `/initial-install`. It walks you through the remaining seven phases (tool installation, optional MCP activation, hooks and scheduled tasks, per-device config, voice customization, optional engagement bootstrap, final validation) and persists progress to `.claude/_install-state/state.json` so you can pause and resume across sessions. The orchestrator delegates to `initial-setup`, `operator-voice-bootstrap`, `wire-hooks-and-tasks`, and `engagement-bootstrap-from-urls` at the appropriate states. Manual operators who prefer to skip the orchestrator can run those sub-skills directly.
 
 After step 5, you're working. Create your first initiative under `Initiatives/{slug}/` using the `_template/` scaffold, and you're shipping.
 
@@ -87,7 +87,7 @@ portable-ai-ecosystem/
 ├── .claude/
 │   ├── hooks/
 │   │   └── session-start.sh        (soft-partition aware)
-│   ├── skills/                     (scaffolds for v1.1 skills)
+│   ├── skills/                     (scaffolds for v1.2 skills)
 │   └── settings.json.template
 ├── Universal/
 │   ├── AGENTS.md
@@ -132,9 +132,9 @@ The framework targets consultants in fintech, healthcare, and other regulated in
 
 ## Status
 
-**v1.0** released 2026-05-27. **v1.1** released 2026-05-28.
+**v1.0** released 2026-05-27. **v1.1** released 2026-05-28. **v1.2** released 2026-05-28.
 
-Stable in v1.1:
+Stable in v1.2:
 
 - Verb-bucket folder framework
 - Voice Layers 1 and 2 (do-not.md, personal.md, formats.md)
@@ -143,10 +143,21 @@ Stable in v1.1:
 - Change-protocol and folder-creation rules
 - Bootstrap script (POSIX bash, idempotent, audit-fixed)
 - Session-start hook (soft-partition aware, lifecycle-prefix safe)
-- Ten v1.1 skills: `validate-install`, `initial-setup`, `engagement-bootstrap-from-urls`, `sanitization-scan`, `initiative-kickoff`, `process-meeting-transcripts`, `change-protocol-sweep`, `skill-creator`, `friction-ledger-capture`, `self-improvement-review`
+- Thirteen v1.2 skills: `initial-install` (orchestrator), `validate-install`, `initial-setup`, `engagement-bootstrap-from-urls`, `operator-voice-bootstrap`, `wire-hooks-and-tasks`, `sanitization-scan`, `initiative-kickoff`, `process-meeting-transcripts`, `change-protocol-sweep`, `skill-creator`, `friction-ledger-capture`, `self-improvement-review`
 - Validation via the `validate-install` skill plus a six-probe markdown checklist as fallback
 - Per-device configuration via the `initial-setup` skill
 - Self-improvement loop: `friction-ledger-capture` (Phase 1, daily-ish capture) plus `self-improvement-review` (Phase 2, cadence-based pattern review)
+- Resumable first-install orchestrator (`initial-install`) with `.claude/_install-state/state.json` progress tracking
+- Generic framework tools catalog at `Universal/tools.md` (5 Tier 0, 7 Tier 1, 9 Tier 2 tools, 10 MCPs)
+
+New in v1.2 (since v1.1):
+
+- 3 new skills: `initial-install` (orchestrator), `operator-voice-bootstrap`, `wire-hooks-and-tasks`
+- 4 new playbooks: `initial-install.md`, `operator-voice-bootstrap.md`, `voice-personal-scrub-check.md`, `change-protocol-sweep-triggers.md`
+- Generic `Universal/tools.md` framework tools catalog
+- State-file participation pattern: `initial-install` owns `.claude/_install-state/state.json`; `validate-install`, `initial-setup`, and `engagement-bootstrap-from-urls` participate as co-operative writers when the orchestrator is active
+- 9 accidental-gap patches: scaffolds added for `READ-references-and-knowledge/glossary/`, `READ-references-and-knowledge/evaluation-ledgers/`, `READ-references-and-knowledge/configs/`, `PRODUCE-outputs/handoffs/`, `PRODUCE-outputs/artifacts/`, `RUN-automations/scheduled-tasks/`, and the skills `_index.md` registry
+- `initial-setup` config schema extended with `friction_ledger.capture_cadence` + `time_of_day` and `self_improvement_review.time_of_day`
 
 New in v1.1 (since v1.0):
 
@@ -154,10 +165,10 @@ New in v1.1 (since v1.0):
 - 4 new skills migrated from the framework author's prior ecosystem: `skill-creator`, `friction-ledger-capture`, `self-improvement-review`, `initial-setup`
 - Skill-drafts restructured from flat to nested directories so multi-file skill packages fit cleanly
 
-Planned for v1.2:
+Planned for v1.3:
 
 - `workspace-health-check` skill migration (substantial: 19-pass audit framework, leaner pass set targeted for the portable framework)
-- Scheduled task surface via `launchd` user agents (technically validated 2026-05-27, pending client-IT approval workflows)
+- Scheduled-task templates shipped under `Universal/RUN-automations/scheduled-tasks/` for the recurring framework skills (the v1.2 folder scaffold ships empty; templates land in v1.3)
 - Meeting-transcript automation via approved MCP connectors (today's path is a source-agnostic manual playbook)
 - A handful of the Friday-evening polish items from the v1 audit deferral queue
 

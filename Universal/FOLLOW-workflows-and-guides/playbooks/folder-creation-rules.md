@@ -1,7 +1,7 @@
 ---
 type: playbook
-last_reviewed: 2026-05-27
-sync_trigger: 2026-05-27-portable-ai-ecosystem-pre-staging
+last_reviewed: 2026-05-28
+sync_trigger: 2026-05-28-v1.2-skills-batch
 depends-on:
   - playbook:change-protocol
 ---

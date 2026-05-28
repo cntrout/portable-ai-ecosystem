@@ -1,11 +1,14 @@
 ---
 type: playbook
-last_reviewed: 2026-05-27
-sync_trigger: 2026-05-27-portable-ai-ecosystem-decisions-and-voice-pass
+last_reviewed: 2026-05-28
+sync_trigger: 2026-05-28-v1.2-skills-batch
 depends-on:
+  - playbook:initial-install
   - playbook:engagement-bootstrap-from-urls
+  - playbook:operator-voice-bootstrap
   - playbook:change-protocol
   - playbook:folder-creation-rules
+  - playbook:voice-composition
 ---
 
 # Portable AI Ecosystem Playbook
@@ -242,22 +245,27 @@ Decisions 1-5 resolved 2026-05-27. Two of three empirical questions resolved 202
 2. ~~**`launchd` headless `claude -p`.**~~ **RESOLVED 2026-05-27.** Empirical test on a personal Mac confirms strong positive: a launchd user agent invoked `claude -p` non-interactively, the run completed without TTY errors or auth blockers, and the expected output was produced. Scheduled-task v2 can rely on launchd directly. Client-side IT approval of the launchd workflow still gates production rollout.
 3. **MDM and Gatekeeper on the client device.** Are `chmod +x` and execution of cloned shell scripts blocked by enterprise endpoint security? If yes, the bootstrap script needs an alternative invocation pattern (e.g., `bash Universal/RUN-automations/scripts/bootstrap.sh` instead of `./Universal/RUN-automations/scripts/bootstrap.sh`). Only testable on the actual client device; the install runbook treats it as a day-1 test with a known fallback.
 
-## Trustly-specific notes for the first run
+## First-run appendix
 
-Treat this section as a one-off appendix to the generic playbook. Future engagements skip it.
+Treat this section as a one-off appendix to the generic playbook. Operators should rewrite or delete it after the first engagement lands on the device.
 
-- **Repo:** `https://github.com/cntrout/portable-ai-ecosystem`, public, MIT-licensed.
-- **Client device working folder:** `~/Trustly-Claude/`.
-- **Anthropic API key:** Trustly-issued, already provisioned on the device.
-- **First initiatives to seed once `engagement-bootstrap-from-urls.md` completes:** TBD by Corey based on the first 1-2 weeks of Trustly conversations. Don't pre-create empty initiative folders.
-- **First validation run** is also the first stress test of the playbook. Expect to find at least 3-5 issues this audit pass missed. Update this playbook and the research bundle with anything new. The change-protocol sweep applies.
+- **Repo:** the public framework repo on the operator's personal GitHub, MIT-licensed.
+- **Client device working folder:** `~/{client-slug}-Claude/` or any other path under the operator's home directory.
+- **Anthropic API key:** client-issued, provisioned on the device by the client's IT process per Decision 3.
+- **First initiatives to seed once `engagement-bootstrap-from-urls.md` completes:** decide based on the first 1-2 weeks of client conversations. Don't pre-create empty initiative folders.
+- **First validation run** is also the first stress test of the playbook. Expect to find at least 3-5 issues the pre-staging audit missed. Update this playbook and the research bundle with anything new. The change-protocol sweep applies.
 
 ## Cross-references
 
+- Initial install orchestrator (the recommended path from fresh clone to fully-configured framework): `initial-install.md`
 - Companion playbook for engagement-layer bootstrap: `engagement-bootstrap-from-urls.md`
+- Operator voice bootstrap (regenerate Layer 2 from the operator's own samples): `operator-voice-bootstrap.md`
+- Voice-personal-scrub check (one-shot verification that the shipped `personal.md` is clean): `voice-personal-scrub-check.md`
 - Voice composition rule (unchanged on the new device): `voice-composition.md`
 - Folder-creation rules (unchanged on the new device): `folder-creation-rules.md`
 - Change-protocol sweep (this playbook's edits ran through it): `change-protocol.md`
+- Change-protocol-sweep trigger moments (until v1.3's nightly backstop ships): `change-protocol-sweep-triggers.md`
+- Generic framework tools catalog: `Universal/tools.md`
 - Decisions ledger: `Universal/RECORD-decisions/_index.md`
 
 *History: [Universal/RECORD-decisions/_index.md](../../RECORD-decisions/_index.md)*

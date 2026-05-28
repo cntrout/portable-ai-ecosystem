@@ -77,6 +77,75 @@ In `Universal/RECORD-decisions/_index.md`, add:
 | {YYYY-MM-DD} | Install validation: {verdict}. {N of 6} probes passed. {remediation summary if any}. | Universal | validate-install skill | [[{YYYY-MM-DD} - Install Validation]] |
 ```
 
+## State-file participation
+
+The `initial-install` orchestrator skill writes `.claude/_install-state/state.json` to track install progress across resumable sessions. When `validate-install` runs (whether the operator invokes it directly OR the orchestrator delegates to it), it participates in that state file as a co-operative writer. The orchestrator owns the file; this skill writes only its own per-skill block.
+
+Stand-alone invocation is still fully supported. If `.claude/_install-state/state.json` does not exist, the skill behaves exactly as documented above (writes the install-record, appends the ledger row, prints next steps to the operator). No state-tracking; the skill is unchanged.
+
+### When state.json exists
+
+1. **Read state.json at start.** Path: `{framework_root}/.claude/_install-state/state.json` (where `{framework_root}` is the output of `git rev-parse --show-toplevel`). Parse it. If the file has `orchestrator_active: true`, record locally that this skill is running as part of an orchestrated install.
+
+2. **Suppress next-step prompts when orchestrator is active.** Normally after Step 5 and Step 6 the skill points the operator at next steps. When `orchestrator_active: true`, skip those prompts; the orchestrator owns the operator-facing next-step messaging. The skill still writes the install-record and the ledger row as usual.
+
+3. **Use the lock file convention.** Before writing to state.json, check for `{framework_root}/.claude/_install-state/.lock`. If the lock exists and its modification time is fresher than 5 minutes, wait briefly and re-check, or abort the state write and surface to the operator. The install-record and ledger row still write regardless of the lock; only the state.json update is gated. Full lock semantics (PID, stale-cleanup) are owned by the orchestrator.
+
+4. **Write the per-skill block on completion.** Update `state.json` with a `skill_runs["validate-install"]` block:
+
+   ```json
+   {
+     "last_run_at": "2026-MM-DDTHH:MM:SS",
+     "outcome": "success",
+     "summary": "all 6 probes passed",
+     "invoked_by": "orchestrator"
+   }
+   ```
+
+   Outcome values:
+   - `success`: all 6 probes PASS (probe 6 skipped graciously on no-initiative also counts as success)
+   - `partial`: some probes PASS, some AMBIGUOUS marked as such
+   - `failed`: one or more probes FAIL after remediation offered
+   - `skipped`: the operator aborted before all probes ran
+
+   The `invoked_by` value is `orchestrator` if `orchestrator_active: true` was read at start; otherwise `operator`.
+
+5. **Atomic write.** Use the `mktemp` + `mv` pattern so a partial write never corrupts state.json:
+
+   ```bash
+   tmp=$(mktemp "$STATE_FILE.XXXXXX")
+   {updated_json} > "$tmp"
+   mv "$tmp" "$STATE_FILE"
+   ```
+
+### state.json contract
+
+The full contract (owned by the orchestrator):
+
+```json
+{
+  "version": "1.0",
+  "schema_version": 1,
+  "orchestrator_active": true,
+  "current_state": "S3_validated",
+  "started_at": "2026-MM-DDTHH:MM:SS",
+  "last_updated_at": "2026-MM-DDTHH:MM:SS",
+  "completed_states": ["S0_clone", "S1_bootstrap", "S2_session", "S3_validated"],
+  "skill_runs": {
+    "validate-install": {
+      "last_run_at": "2026-MM-DDTHH:MM:SS",
+      "outcome": "success",
+      "summary": "all 6 probes passed",
+      "invoked_by": "orchestrator"
+    },
+    "initial-setup": { },
+    "engagement-bootstrap-from-urls": { }
+  }
+}
+```
+
+`validate-install` only writes its own `skill_runs["validate-install"]` block plus a refresh of `last_updated_at`. It never modifies `current_state`, `completed_states`, or other skills' blocks. Those are the orchestrator's.
+
 ## Behavior constraints
 
 - Read-only against the user's existing files except the install-record and the ledger

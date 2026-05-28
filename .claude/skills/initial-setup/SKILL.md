@@ -53,13 +53,30 @@ Record in `config.friction_ledger.path`.
 
 If the ledger file doesn't exist yet at the chosen path, create it with the template header (header + empty `## Entries` section + sentinel HTML comment for the next-entry append point).
 
-### Step 4: Self-improvement-review cadence
+### Step 4: Friction-ledger-capture cadence
+
+The `friction-ledger-capture` skill scans recent Claude sessions for behavioral friction and appends observations to the ledger. The operator picks how often.
+
+Defaults:
+- Cadence: `daily`
+- Time of day: `evening` (after work hours; captures the day's friction before context fades)
+
+Other options to surface:
+- `weekly` (less granular but lower cognitive load)
+- `manual-only` (operator invokes; no scheduled reminder)
+
+Record in `config.friction_ledger.capture_cadence` and `config.friction_ledger.time_of_day`.
+
+If the operator picks anything other than `manual-only`, the `wire-hooks-and-tasks` skill (run later in the install sequence) will generate the corresponding `launchd` plist.
+
+### Step 5: Self-improvement-review cadence
 
 The `self-improvement-review` skill reads the friction ledger periodically and proposes framework improvements. The operator picks the cadence.
 
 Defaults:
 - Cadence: `weekly`
 - Day of week: `friday`
+- Time of day: `morning`
 
 Other options to surface:
 - `daily` (high signal, high noise)
@@ -68,11 +85,11 @@ Other options to surface:
 - `monthly` (low maintenance)
 - `manual-only` (operator invokes; no scheduled reminder)
 
-Record in `config.self_improvement_review.{cadence, day_of_week}`.
+Record in `config.self_improvement_review.{cadence, day_of_week, time_of_day}`.
 
-If the operator picks anything other than `manual-only`, surface the v2 path: "Once `launchd` user agents are approved and authored, this cadence will drive a scheduled invocation. For v1, you invoke the skill manually on this cadence."
+If the operator picks anything other than `manual-only`, the `wire-hooks-and-tasks` skill (run later in the install sequence) will generate the corresponding `launchd` plist.
 
-### Step 5: Voice customization plan
+### Step 6: Voice customization plan
 
 The framework ships with the framework author's voice as the worked example (`personal.md`). For the operator's own work, three paths:
 
@@ -84,15 +101,15 @@ Ask the operator which path. Record in `config.voice.personal_md_status` as one 
 
 If `operator-pending`, surface the regeneration procedure (collect 100+ writing samples, summarize voice patterns, write to `Universal/FOLLOW-workflows-and-guides/voice/personal.md`, run `change-protocol-sweep` if voice rules changed).
 
-### Step 6: Workspace-health-check posture (v1.2 placeholder)
+### Step 7: Workspace-health-check posture (v1.3 placeholder)
 
-The `workspace-health-check` skill is not in v1.1; it ships in v1.2. This step is a placeholder so the operator can express intent now.
+The `workspace-health-check` skill is not in v1.2; it ships in v1.3. This step is a placeholder so the operator can express intent now.
 
 Ask: "When `workspace-health-check` ships, do you want it enabled by default? (y/n; default y)"
 
 Record in `config.workspace_health_check.enabled_when_available`.
 
-### Step 7: Write config.json
+### Step 8: Write config.json
 
 Write the consolidated config to `.claude/_setup-state/config.json`. Format example:
 
@@ -102,11 +119,14 @@ Write the consolidated config to `.claude/_setup-state/config.json`. Format exam
   "setup_completed_at": "2026-05-28T14:32:00",
   "framework_root": "/Users/{operator}/path/to/repo",
   "friction_ledger": {
-    "path": "Universal/PRODUCE-outputs/friction-ledger.md"
+    "path": "Universal/PRODUCE-outputs/friction-ledger.md",
+    "capture_cadence": "daily",
+    "time_of_day": "evening"
   },
   "self_improvement_review": {
     "cadence": "weekly",
-    "day_of_week": "friday"
+    "day_of_week": "friday",
+    "time_of_day": "morning"
   },
   "voice": {
     "personal_md_status": "operator-pending"
@@ -119,7 +139,7 @@ Write the consolidated config to `.claude/_setup-state/config.json`. Format exam
 
 Create `.claude/_setup-state/` directory if it doesn't exist. The folder is in the repo's root `.gitignore` (per `bootstrap.sh` setup) so config.json stays local and never commits.
 
-### Step 8: Append ledger row
+### Step 9: Append ledger row
 
 Append one row to `Universal/RECORD-decisions/_index.md`:
 
@@ -129,7 +149,7 @@ Append one row to `Universal/RECORD-decisions/_index.md`:
 
 This row is the audit trail for "what did the operator configure and when."
 
-### Step 9: Confirm and print next steps
+### Step 10: Confirm and print next steps
 
 Report a summary of what was configured. Surface the next-step pointers:
 
@@ -137,6 +157,77 @@ Report a summary of what was configured. Surface the next-step pointers:
 - "Or create your first initiative with `initiative-kickoff`."
 - "Run `friction-ledger-capture` at end of day to populate the ledger."
 - "Run `self-improvement-review` on your chosen cadence."
+
+## State-file participation
+
+The `initial-install` orchestrator skill writes `.claude/_install-state/state.json` to track install progress across resumable sessions. When `initial-setup` runs (whether the operator invokes it directly OR the orchestrator delegates to it at State 8), it participates in that state file as a co-operative writer. The orchestrator owns the file; this skill writes only its own per-skill block.
+
+`_setup-state/` and `_install-state/` are sibling local-state directories under `.claude/`. They serve different purposes: `_setup-state/config.json` is per-device configuration the operator chose (friction-ledger path, cadence, voice plan); `_install-state/state.json` is per-install progress tracking owned by the orchestrator. This skill writes to both when the orchestrator is active; just to `_setup-state/` when it isn't.
+
+Stand-alone invocation is still fully supported. If `.claude/_install-state/state.json` does not exist, the skill behaves exactly as documented above (writes config.json, appends the ledger row, prints next steps). No state-tracking; the skill is unchanged.
+
+### When state.json exists
+
+1. **Read state.json at start.** Path: `{framework_root}/.claude/_install-state/state.json`. Parse it. If the file has `orchestrator_active: true`, record locally that this skill is running as part of an orchestrated install.
+
+2. **Use the lock file convention.** Before writing to state.json, check for `{framework_root}/.claude/_install-state/.lock`. If the lock exists and its modification time is fresher than 5 minutes, wait briefly and re-check, or abort the state.json write and surface to the operator. The config.json write and the ledger row append still happen regardless of the lock; only the state.json update is gated. Full lock semantics (PID, stale-cleanup) are owned by the orchestrator.
+
+3. **Write the per-skill block on completion.** After config.json is written and the ledger row is appended, update `state.json` with a `skill_runs["initial-setup"]` block:
+
+   ```json
+   {
+     "last_run_at": "2026-MM-DDTHH:MM:SS",
+     "outcome": "success",
+     "summary": "config written; cadence weekly Friday; voice plan operator-pending",
+     "invoked_by": "orchestrator"
+   }
+   ```
+
+   Outcome values:
+   - `success`: config.json written, ledger row appended, all steps confirmed by the operator
+   - `partial`: some keys captured, some skipped with TODO markers per existing Step 9 failure handling
+   - `failed`: write to config.json failed (permissions, disk full) and the skill aborted
+   - `skipped`: the operator declined to make any choice and exited before Step 7
+
+   The `invoked_by` value is `orchestrator` if `orchestrator_active: true` was read at start; otherwise `operator`.
+
+   The `summary` field should be one line and surface the load-bearing choices: cadence, voice plan, any non-default friction-ledger path.
+
+4. **Atomic write.** Use the `mktemp` + `mv` pattern so a partial write never corrupts state.json:
+
+   ```bash
+   tmp=$(mktemp "$STATE_FILE.XXXXXX")
+   {updated_json} > "$tmp"
+   mv "$tmp" "$STATE_FILE"
+   ```
+
+### state.json contract
+
+The full contract (owned by the orchestrator):
+
+```json
+{
+  "version": "1.0",
+  "schema_version": 1,
+  "orchestrator_active": true,
+  "current_state": "S8_setup",
+  "started_at": "2026-MM-DDTHH:MM:SS",
+  "last_updated_at": "2026-MM-DDTHH:MM:SS",
+  "completed_states": ["S0_clone", "S1_bootstrap", "S2_session", "S3_validated", "..."],
+  "skill_runs": {
+    "validate-install": { },
+    "initial-setup": {
+      "last_run_at": "2026-MM-DDTHH:MM:SS",
+      "outcome": "success",
+      "summary": "config written; cadence weekly Friday; voice plan operator-pending",
+      "invoked_by": "orchestrator"
+    },
+    "engagement-bootstrap-from-urls": { }
+  }
+}
+```
+
+`initial-setup` only writes its own `skill_runs["initial-setup"]` block plus a refresh of `last_updated_at`. It never modifies `current_state`, `completed_states`, or other skills' blocks. Those are the orchestrator's.
 
 ## Behavior constraints
 

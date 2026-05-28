@@ -1,9 +1,10 @@
 ---
 type: playbook
-last_reviewed: 2026-05-27
-sync_trigger: 2026-05-27-portable-ai-ecosystem-pre-staging
+last_reviewed: 2026-05-28
+sync_trigger: 2026-05-28-v1.2-skills-batch
 depends-on:
   - playbook:folder-creation-rules
+  - playbook:change-protocol-sweep-triggers
 ---
 
 # Documentation Sync Change Protocol
@@ -417,9 +418,10 @@ this playbook as its trigger.
 ## Related
 
 - `Universal/RECORD-decisions/_index.md`, the ledger this playbook writes to
+- `Universal/FOLLOW-workflows-and-guides/playbooks/change-protocol-sweep-triggers.md`, the moment-by-moment trigger reference for when to invoke the sweep
 - `Universal/FOLLOW-workflows-and-guides/playbooks/maintenance-schedule.md`, the manual cadence backstop
 - `Universal/FOLLOW-workflows-and-guides/playbooks/automation-schedule.md`, where the README-coverage backstop lives once the workspace-health-check skill is installed
-- `RUN-automations/skills/workspace-health-check/SKILL.md`, the deterministic backstop for missed sweeps
+- `RUN-automations/skills/workspace-health-check/SKILL.md`, the deterministic backstop for missed sweeps (v1.3)
 - Root plus Universal `AGENTS.md`/`CLAUDE.md` "Edit-time sync rules", the rule that points here
 
 *History: [Universal/RECORD-decisions/_index.md](../../RECORD-decisions/_index.md)*

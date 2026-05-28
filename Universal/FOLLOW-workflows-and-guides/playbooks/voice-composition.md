@@ -1,10 +1,11 @@
 ---
 type: playbook
-last_reviewed: 2026-05-27
-sync_trigger: 2026-05-27-portable-ai-ecosystem-pre-staging
+last_reviewed: 2026-05-28
+sync_trigger: 2026-05-28-v1.2-skills-batch
 depends-on:
   - playbook:change-protocol
   - playbook:folder-creation-rules
+  - playbook:operator-voice-bootstrap
 ---
 
 # Voice Composition
@@ -99,6 +100,12 @@ in their SKILL.md. Specifically:
 |---|---|
 | `initiative-kickoff` | `doc:detailed` variant. Engagement Layer 3 applies, customer-facing. |
 | `engagement-bootstrap-from-urls` | `doc:concise` variant. Customer-facing if the bootstrap output is shared with the client; otherwise internal. |
+| `operator-voice-bootstrap` | Internal. The output is the regenerated `personal.md` (a structured observations file), not customer-facing content. Layer 3 does not apply. |
+| `friction-ledger-capture` | Internal. Append-only operator-facing log; Layer 3 does not apply. |
+| `self-improvement-review` | Internal. Propose-only review document for the operator; Layer 3 does not apply. |
+| `initial-install` | Internal. Orchestrator status output and the Initial Install record; Layer 3 does not apply. |
+| `initial-setup` | Internal. Configuration prompts and ledger row; Layer 3 does not apply. |
+| `wire-hooks-and-tasks` | Internal. Plist generation and launchctl status output; Layer 3 does not apply. |
 
 Skills not listed: apply the four-step rule normally based on detected
 format and intended audience.

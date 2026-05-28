@@ -178,7 +178,7 @@ Each template shipped under `Universal/READ-references-and-knowledge/concepts/en
 
 These are kept as concept docs (not embedded in this playbook) so that prompt revisions don't trigger a change-protocol sweep on the playbook itself, only on the concept doc. Templates are loaded by the playbook at runtime.
 
-(Templates themselves are deferred to v1.1. For the first engagement run, Claude composes the prompts inline based on this playbook's schema. The concept-doc-driven version is a refactor once the schema is stable.)
+(Templates themselves are deferred to a future release. For the first engagement run, Claude composes the prompts inline based on this playbook's schema. The concept-doc-driven version is a refactor once the schema is stable.)
 
 ## Cross-references
 

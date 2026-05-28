@@ -238,24 +238,45 @@ In the same `claude` session:
 
 **Expected:** The skill walks through six probes, prints a green health card, and writes a dated install-record to `Universal/RECORD-decisions/`. If anything is red or amber, the skill prints a remediation pointer for that specific probe.
 
-### Step 9. Run the initial-setup skill
+### Step 9. Run the initial-install orchestrator (recommended)
 
-After validation passes, configure per-device choices the framework's other skills need. In the same `claude` session:
+After validation passes, the easiest path through the rest of the install is the `initial-install` orchestrator skill. It walks you through seven more phases (tool installation, optional MCP activation, hooks and scheduled tasks, per-device config, voice customization, optional engagement bootstrap, final validation) and persists progress to `.claude/_install-state/state.json` so you can pause and resume across sessions.
+
+In the same `claude` session:
+
+```
+> /initial-install
+```
+
+**Expected:** The orchestrator runs a 12-check pre-flight matrix (terminal, shell, OS, locale, disk space, working-folder write, network reachability for `github.com` and `api.anthropic.com`, MDM indicators, time drift, bash version), surfaces any warnings, and prompts you to confirm before advancing. It then walks state by state, delegating to:
+
+- `initial-setup` (S8 per-device config: friction-ledger path, cadence, voice plan, health-check posture)
+- `operator-voice-bootstrap` (S9 voice customization, path C only)
+- `wire-hooks-and-tasks` (S7 hooks + scheduled tasks)
+- `engagement-bootstrap-from-urls` (S10 engagement layer)
+- `validate-install` (S3 entry and S11 final validation)
+
+You can pause after any phase and re-invoke `/initial-install` to resume. Total optimistic run-time: roughly 60 minutes. Realistic on a managed device: 3-4 hours spread across days, with IT-approval gates between phases.
+
+**Manual path.** If you prefer to skip the orchestrator and run the sub-skills directly:
 
 ```
 > /initial-setup
 ```
 
-**Expected:** The skill walks through:
+`initial-setup` walks through:
 1. Framework root confirmation (auto-detected via git)
 2. Friction-ledger path (default `Universal/PRODUCE-outputs/friction-ledger.md`)
-3. Self-improvement-review cadence (default weekly Friday)
-4. Voice customization plan (use shipped author voice / customize now / customize later)
-5. Workspace-health-check posture (v1.2 placeholder)
+3. Friction-ledger-capture cadence and time of day (default daily evening)
+4. Self-improvement-review cadence and time of day (default weekly Friday morning)
+5. Voice customization plan (use shipped author voice / customize now / customize later)
+6. Workspace-health-check posture (v1.3 placeholder)
 
 Writes the config to `.claude/_setup-state/config.json` and appends a row to `Universal/RECORD-decisions/_index.md`. Idempotent; safe to re-invoke any time to revisit settings.
 
-The next section is the spec for what the skill checks, in case you prefer to run the probes manually.
+After `initial-setup`, invoke `/wire-hooks-and-tasks` to load the launchd plists, `/operator-voice-bootstrap` if you chose path C, and `/engagement-bootstrap-from-urls` if you want the engagement layer populated. Re-run `/validate-install` at the end for the final check.
+
+The next section is the spec for what the validate-install skill checks, in case you prefer to run the probes manually.
 
 ---
 

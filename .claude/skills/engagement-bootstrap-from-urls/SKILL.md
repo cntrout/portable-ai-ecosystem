@@ -93,6 +93,75 @@ Run the 3 smoke prompts from the playbook §"6. Smoke test":
 
 Report PASS / FAIL per prompt. All 3 green = engagement layer is live; first initiative can start.
 
+## State-file participation
+
+The `initial-install` orchestrator skill writes `.claude/_install-state/state.json` to track install progress across resumable sessions. When `engagement-bootstrap-from-urls` runs (whether the operator invokes it directly OR the orchestrator delegates to it at State 10), it participates in that state file as a co-operative writer. The orchestrator owns the file; this skill writes only its own per-skill block.
+
+Stand-alone invocation is still fully supported. If `.claude/_install-state/state.json` does not exist, the skill behaves exactly as documented above (collects URLs, spawns agents, stages files, files into the engagement layer, appends the ledger row, runs the smoke test). No state-tracking; the skill is unchanged.
+
+### When state.json exists
+
+1. **Read state.json at start.** Path: `{framework_root}/.claude/_install-state/state.json` (where `{framework_root}` is the output of `git rev-parse --show-toplevel`). Parse it. If the file has `orchestrator_active: true`, record locally that this skill is running as part of an orchestrated install.
+
+2. **Use the lock file convention.** Before writing to state.json, check for `{framework_root}/.claude/_install-state/.lock`. If the lock exists and its modification time is fresher than 5 minutes, wait briefly and re-check, or abort the state.json write and surface to the operator. The engagement-layer file writes and the ledger row append still happen regardless of the lock; only the state.json update is gated. Full lock semantics (PID, stale-cleanup) are owned by the orchestrator.
+
+3. **Write the per-skill block on completion.** After the engagement-layer files are committed and the ledger row is appended, update `state.json` with a `skill_runs["engagement-bootstrap-from-urls"]` block:
+
+   ```json
+   {
+     "last_run_at": "2026-MM-DDTHH:MM:SS",
+     "outcome": "partial",
+     "summary": "4 of 5 URL categories populated; people.md failed (no public team page); 1 of 6 URL inputs returned 404",
+     "invoked_by": "orchestrator"
+   }
+   ```
+
+   Outcome values:
+   - `success`: homepage returned, all 5 agents produced output, all 5 engagement-layer files committed
+   - `partial`: homepage returned, but some URL categories 404'd, were login-gated, or one or more agents failed gracefully; at least one engagement-layer file is populated
+   - `failed`: homepage 404 or unreachable, or 0 of 5 agents produced usable output
+   - `skipped`: operator aborted before Step 6 (no engagement-layer files were committed)
+
+   The `invoked_by` value is `orchestrator` if `orchestrator_active: true` was read at start; otherwise `operator`.
+
+   The `summary` field should include URL category counts. Format: "{N} of {M} URL categories populated; {failed} failed; {skipped} skipped". Cite specific categories when material (e.g., "people.md skipped, no public team page").
+
+4. **Atomic write.** Use the `mktemp` + `mv` pattern so a partial write never corrupts state.json:
+
+   ```bash
+   tmp=$(mktemp "$STATE_FILE.XXXXXX")
+   {updated_json} > "$tmp"
+   mv "$tmp" "$STATE_FILE"
+   ```
+
+### state.json contract
+
+The full contract (owned by the orchestrator):
+
+```json
+{
+  "version": "1.0",
+  "schema_version": 1,
+  "orchestrator_active": true,
+  "current_state": "S10_engagement",
+  "started_at": "2026-MM-DDTHH:MM:SS",
+  "last_updated_at": "2026-MM-DDTHH:MM:SS",
+  "completed_states": ["S0_clone", "S1_bootstrap", "S2_session", "S3_validated", "..."],
+  "skill_runs": {
+    "validate-install": { },
+    "initial-setup": { },
+    "engagement-bootstrap-from-urls": {
+      "last_run_at": "2026-MM-DDTHH:MM:SS",
+      "outcome": "partial",
+      "summary": "4 of 5 URL categories populated; people.md failed (no public team page)",
+      "invoked_by": "orchestrator"
+    }
+  }
+}
+```
+
+This skill only writes its own `skill_runs["engagement-bootstrap-from-urls"]` block plus a refresh of `last_updated_at`. It never modifies `current_state`, `completed_states`, or other skills' blocks. Those are the orchestrator's.
+
 ## Hard constraints
 
 - **Public-facing URLs only.** Anything behind login, paywall, or VPN gets escalated to the user, never auto-bypassed.
